@@ -80,7 +80,13 @@ class PapiHook extends PlaceholderExpansion {
   @SuppressWarnings("all")
   public String onRequest(OfflinePlayer player, @NotNull String identifier) {
     if (identifier.equalsIgnoreCase("nick")) {
-      return getNick(player);
+      if(player.isOnline() && player.getPlayer().hasPermission("hexnicks.canhavenick")){
+        return getNick(player);
+      }else{
+        return LegacyComponentSerializer.builder().hexColors().useUnusualXRepeatedCharacterHexFormat().build()
+                .serialize(Component.text(player.getName()).colorIfAbsent(HexNicks.config().DEFAULT_USERNAME_COLOR));
+      }
+
     } else if (identifier.equalsIgnoreCase("nick_raw")) {
       Component nick = HexNicks.core().getNickMap().get(player.getUniqueId());
 
@@ -159,6 +165,9 @@ class PapiHook extends PlaceholderExpansion {
     if (nick == null) {
       try {
         nick = HexNicks.storage().getNick(player.getUniqueId()).get();
+        if(nick != null){
+          HexNicks.core().getNickMap().put(player.getUniqueId(),nick);
+        }
       } catch (InterruptedException | ExecutionException e) {
         HexNicks.logging().error("Error retrieving nickname for Papi: ");
         e.printStackTrace();
@@ -166,6 +175,7 @@ class PapiHook extends PlaceholderExpansion {
     }
 
     if (nick == null) {
+      HexNicks.core().getNickMap().put(player.getUniqueId(),Component.text(player.getName()).colorIfAbsent(HexNicks.config().DEFAULT_USERNAME_COLOR));
       return LegacyComponentSerializer.builder().hexColors().useUnusualXRepeatedCharacterHexFormat().build()
           .serialize(Component.text(player.getName()).colorIfAbsent(HexNicks.config().DEFAULT_USERNAME_COLOR));
     } else {
